@@ -1,4 +1,5 @@
 import tkinter
+from tkinter import Menu
 from src.constants import *
 from PIL import Image, ImageTk
 
@@ -8,8 +9,38 @@ okno = tkinter.Tk()
 okno.title("Skicár")
 okno.geometry(f"{x}x{y}")
 
+# create a menubar
+menubar = Menu(okno, tearoff=0)
+okno.config(menu=menubar)
+
+# create a menu
+file_menu = Menu(menubar, tearoff=0)
+file_menu.add_command(label="New")
+file_menu.add_command(label="Open")
+file_menu.add_command(label="Save")
+file_menu.add_command(label="Save as...")
+file_menu.add_command(label='Exit', command=okno.destroy)
 
 
+edit_menu = Menu(menubar, tearoff=0)
+edit_menu.add_command(label="Undo")
+edit_menu.add_command(label="Redo")
+edit_menu.add_separator()
+edit_menu.add_command(label="Copy")
+edit_menu.add_command(label="Paste")
+edit_menu.add_command(label="Delete")
+
+
+
+menubar.add_cascade(
+    label="File",
+    menu=file_menu
+)
+
+menubar.add_cascade(
+    label="Edit",
+    menu=edit_menu
+)
 
 navbar = tkinter.Canvas(width=x, height=y/5, bg="gray")
 navbar.place(x=0, y=0)
@@ -111,7 +142,6 @@ def handle_left_click(event):
 
 def handle_left_up(event):
     global bodky, shapes
-    
     shapes = []
     bodky = []
 
