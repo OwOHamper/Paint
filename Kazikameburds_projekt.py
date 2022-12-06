@@ -13,40 +13,12 @@ okno.geometry(f"{x}x{y}")
 menubar = Menu(okno, tearoff=0)
 okno.config(menu=menubar)
 
-# create a menu
-file_menu = Menu(menubar, tearoff=0)
-file_menu.add_command(label="New")
-file_menu.add_command(label="Open")
-file_menu.add_command(label="Save")
-file_menu.add_command(label="Save as...")
-file_menu.add_command(label='Exit', command=okno.destroy)
-
-
-edit_menu = Menu(menubar, tearoff=0)
-edit_menu.add_command(label="Undo")
-edit_menu.add_command(label="Redo")
-edit_menu.add_separator()
-edit_menu.add_command(label="Copy")
-edit_menu.add_command(label="Paste")
-edit_menu.add_command(label="Delete")
-
-
-
-menubar.add_cascade(
-    label="File",
-    menu=file_menu
-)
-
-menubar.add_cascade(
-    label="Edit",
-    menu=edit_menu
-)
-
 navbar = tkinter.Canvas(width=x, height=y/5, bg="gray")
 navbar.place(x=0, y=0)
 
 canvas = tkinter.Canvas(width=x, height=y, cursor="pencil", bg="white")
 canvas.place(x=0, y=y/5)
+
 
 def rgb_color(rgb):
     r, g, b = rgb
@@ -115,6 +87,7 @@ def handle_key_event(event):
 
 bodky = []
 shapes = []
+history = []
 
 def handle_left_click(event):
     global bodky, shapes
@@ -142,8 +115,43 @@ def handle_left_click(event):
 
 def handle_left_up(event):
     global bodky, shapes
+    history.append(shapes)
     shapes = []
     bodky = []
+
+def undo():
+    global history
+    canvas.delete(history[-1])
+    history.pop(-1)
+
+# create a menu
+file_menu = Menu(menubar, tearoff=0)
+file_menu.add_command(label="New")
+file_menu.add_command(label="Open")
+file_menu.add_command(label="Save")
+file_menu.add_command(label="Save as...")
+file_menu.add_command(label='Exit', command=okno.destroy)
+
+
+edit_menu = Menu(menubar, tearoff=0)
+edit_menu.add_command(label="Undo", command=undo)
+edit_menu.add_separator()
+edit_menu.add_command(label="Copy")
+edit_menu.add_command(label="Paste")
+edit_menu.add_command(label="Delete", command=lambda: canvas.delete("all"))
+
+
+
+menubar.add_cascade(
+    label="File",
+    menu=file_menu
+)
+
+menubar.add_cascade(
+    label="Edit",
+    menu=edit_menu
+)
+
 
 
 canvas.bind_all("<Key>", handle_key_event)
