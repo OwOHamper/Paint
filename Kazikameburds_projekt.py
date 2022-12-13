@@ -162,15 +162,25 @@ def copy_canvas(coords):
     output.close()
     save_to_clipboard(data)
 
+def open_image():
+    global image
+    image = Image.open(filedialog.askopenfilename(initialdir="/", title="Select file", filetypes=(
+        ('PNG', '*.png'), ('JPEG', ('*.jpg', '*.jpeg', '*.jpe')), ('BMP', ('*.bmp', '*.jdib')))))
+    # image = image.resize((canvas.winfo_width(), canvas.winfo_height()), Image.ANTIALIAS)
+    image = ImageTk.PhotoImage(image)
+    canvas.create_image(0, 0, anchor="nw", image=image)
+
+
 control = False
+shift = False
 def handle_key_event(event):
-    global control
-    global selectTool
+    global control, shift, selectTool
     key = event.keysym
 
     if key == "Control_L":
         control = True
-
+    if key == "Shift_L":
+        shift = True
 
     if key == "Delete":
         if selectTool is not None:
@@ -182,29 +192,47 @@ def handle_key_event(event):
             canvas.delete(selectTool)
             selectTool = None
         selectTool = canvas.create_rectangle(5, 5, canvas.winfo_width()-10, canvas.winfo_height()-10, width=1, outline="black", dash=(4, 1))
-    elif key == "c" and control:
+    elif key == "c" and control and selectTool is not None:
         copy_canvas(canvas.coords(selectTool))
         canvas.delete(selectTool)
+    elif key == "n" and control:
+        popupmsg()
+    elif key == "o" and control:
+        open_image()
+    elif key == "s" and control:
+        save_canvas()
+    elif key == "s" and control and shift:
+        save_canvas_as()
     # elif key == "v" and control:
         # paste_image()
+    elif key == "z" and control:
+        undo()
         
 def handle_key_release(event):
-    global control
+    global control, shift
     key = event.keysym
     if key == "Control_L":
         control = False
+    if key == "Shift_L":
+        shift = False
 
 bodky = []
 shapes = []
 history = []
+draw_history = []
 
 def handle_left_click(event):
-    global bodky, shapes, selectTool
+    global bodky, shapes, selectTool, draw_history
     if tool == "pencil":
-        bodky.append([event.x, event.y])
-        if len(bodky) >= 2:
-            canvas.create_line(bodky[0], bodky[1], width=widthSlider.get(), fill=current_color)
-            bodky.pop(0)
+        if widthSlider.get() < 3:
+            bodky.append([event.x, event.y])
+            if len(bodky) >= 2:
+                line = canvas.create_line(bodky[0], bodky[1], width=widthSlider.get(), fill=current_color)
+                draw_history.append(line)
+                bodky.pop(0)
+        else:
+            oval = canvas.create_oval(event.x-widthSlider.get()/2, event.y-widthSlider.get()/2, event.x+widthSlider.get()/2, event.y+widthSlider.get()/2, fill=current_color, outline=current_color)
+            draw_history.append(oval)
     # elif tool == "rectangle":
     else:
         if len(bodky) < 1:
@@ -228,7 +256,7 @@ def handle_left_click(event):
         shapes.append(s)
 
 def handle_left_up(event):
-    global bodky, shapes, selectTool
+    global bodky, shapes, selectTool, draw_history
     if tool == "select":
         selectTool = shapes[0]
         # canvas.delete(shapes[0])
@@ -236,19 +264,30 @@ def handle_left_up(event):
         # if len(bodky) >= 2:
         #     canvas.create_line(bodky[0], bodky[1], width=widthSlider.get(), fill=current_color)
         #     bodky.pop(0)
-    history.append(shapes)
+    if shapes != []:
+        history.append(shapes)
+    if draw_history != []:
+        history.append(draw_history)
     shapes = []
     bodky = []
+    draw_history = []
 
 def undo():
     global history
-    canvas.delete(history[-1])
+    if len(history) == 0:
+        return
+    if type(history[-1]) == list:
+        for line in history[-1]:
+            canvas.delete(line)
+    else:
+        canvas.delete(history[-1])
+
     history.pop(-1)
 
 # create a menu
 file_menu = Menu(menubar, tearoff=0)
 file_menu.add_command(label="New", command=popupmsg, accelerator="Ctrl+N")
-file_menu.add_command(label="Open")
+file_menu.add_command(label="Open", command=open_image, accelerator="Ctrl+O")
 file_menu.add_command(label="Save", command=save_canvas, accelerator="Ctrl+S")
 file_menu.add_command(label="Save as...", command=save_canvas_as, accelerator="Ctrl+Shift+S")
 file_menu.add_command(label='Exit', command=okno.destroy)
