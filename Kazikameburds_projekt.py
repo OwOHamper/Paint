@@ -146,7 +146,8 @@ def save_canvas_as():
 def save_image_as(image):
     result = filedialog.asksaveasfilename(initialdir="/", title="Save file as", defaultextension=".png", filetypes=(
         ('PNG', '*.png'), ('JPEG', ('*.jpg', '*.jpeg', '*.jpe')), ('BMP', ('*.bmp', '*.jdib'))))
-    image.save(result)
+    if result != "":
+        image.save(result)
 
 def copy_canvas(coords):
     x = okno.winfo_rootx() + canvas.winfo_x() + coords[0] + 1
@@ -167,8 +168,9 @@ def open_image():
     image = Image.open(filedialog.askopenfilename(initialdir="/", title="Select file", filetypes=(
         ('PNG', '*.png'), ('JPEG', ('*.jpg', '*.jpeg', '*.jpe')), ('BMP', ('*.bmp', '*.jdib')))))
     # image = image.resize((canvas.winfo_width(), canvas.winfo_height()), Image.ANTIALIAS)
-    image = ImageTk.PhotoImage(image)
-    canvas.create_image(0, 0, anchor="nw", image=image)
+    if image != "":
+        image = ImageTk.PhotoImage(image)
+        canvas.create_image(0, 0, anchor="nw", image=image)
 
 
 control = False
@@ -258,6 +260,7 @@ def handle_left_click(event):
 def handle_left_up(event):
     global bodky, shapes, selectTool, draw_history
     if tool == "select":
+        print(shapes)
         selectTool = shapes[0]
         # canvas.delete(shapes[0])
         # bodky.append([event.x, event.y])
@@ -317,6 +320,7 @@ menubar.add_cascade(
 
 canvas.bind_all("<Key>", handle_key_event)
 canvas.bind_all("<KeyRelease>", handle_key_release)
+canvas.bind("<Button-1>", handle_left_click)
 canvas.bind("<B1-Motion>", handle_left_click)
 canvas.bind("<ButtonRelease>", handle_left_up)
 okno.mainloop()
