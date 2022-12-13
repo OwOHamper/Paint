@@ -2,6 +2,9 @@ import tkinter
 from tkinter import Menu
 from src.constants import *
 from PIL import Image, ImageTk, ImageGrab
+import win32clipboard as clipboard
+from io import BytesIO
+from tkinter import filedialog
 
 x, y = 800, 500
 
@@ -24,12 +27,12 @@ canvas = tkinter.Canvas(width=x, height=y-navbar_y_size, cursor="pencil", bg="wh
 canvas.place(x=0, y=navbar_y_size)
 
 def set_size(x, y):
-    # global okno, canvas, navbar, menubar
-    print(y-navbar_y_size)
+    navbar.config(width=x, height=navbar_y_size)
     canvas.config(width=x, height=y-navbar_y_size)
     okno.geometry(f"{x+10}x{y+10}") 
 
-set_size(x, y)
+okno.geometry(f"810x530") 
+
 
 def rgb_color(rgb):
     r, g, b = rgb
@@ -45,8 +48,6 @@ pixel = tkinter.PhotoImage(width=1, height=1)
 def add_button(x, y, rgb):
     return tkinter.Button(navbar, bg=rgb_color(rgb), activebackground=rgb_color(rgb), image=pixel, width=15, height=15, cursor="target",
     command=lambda: handle_color_button_click(rgb_color(rgb))).place(x=x, y=y)
-
-
 
 
 
@@ -79,9 +80,12 @@ clearImage = load_image(CLEAR_PATH)
 selectImage = load_image(SELECT_PATH)
 
 tool = "pencil"
-
+selectTool = None
 def change_tool(new_tool):
-    global tool
+    global tool, selectTool
+    if selectTool != None and new_tool != "select":
+        canvas.delete(selectTool)
+        selectTool = None
     tool = new_tool
 
 
@@ -92,6 +96,13 @@ tkinter.Button(navbar, image=rectImageFilled, width=15, height=15, cursor="targe
 tkinter.Button(navbar, image=circleImage, width=15, height=15, cursor="target", command=lambda: change_tool("circle")).place(x=540, y=5)
 tkinter.Button(navbar, image=circleImageFilled, width=15, height=15, cursor="target", command=lambda: change_tool("circle_filled")).place(x=560, y=5)
 tkinter.Button(navbar, image=clearImage, width=15, height=15, cursor="target", command=lambda: canvas.delete("all")).place(x=580, y=5)
+
+
+def save_to_clipboard(image):
+    clipboard.OpenClipboard()
+    clipboard.EmptyClipboard()
+    clipboard.SetClipboardData(clipboard.CF_DIB, image)
+    clipboard.CloseClipboard()
 
 
 def destroy(window, e1, e2):
@@ -123,8 +134,33 @@ def save_canvas():
     y = okno.winfo_rooty() + canvas.winfo_y()
     xx = x + canvas.winfo_width()
     yy = y + canvas.winfo_height()
-    print(x, y, xx, yy)
-    ImageGrab.grab(bbox=(x, y, xx, yy)).save("test.png")
+    ImageGrab.grab(bbox=(x, y, xx, yy)).save("canvas.png")
+
+def save_canvas_as():
+    x = okno.winfo_rootx() + canvas.winfo_x()
+    y = okno.winfo_rooty() + canvas.winfo_y()
+    xx = x + canvas.winfo_width()
+    yy = y + canvas.winfo_height()
+    save_image_as(ImageGrab.grab(bbox=(x, y, xx, yy)))
+
+def save_image_as(image):
+    result = filedialog.asksaveasfilename(initialdir="/", title="Save file as", defaultextension=".png", filetypes=(
+        ('PNG', '*.png'), ('JPEG', ('*.jpg', '*.jpeg', '*.jpe')), ('BMP', ('*.bmp', '*.jdib'))))
+    image.save(result)
+
+def copy_canvas(coords):
+    x = okno.winfo_rootx() + canvas.winfo_x() + coords[0] + 1
+    y = okno.winfo_rooty() + canvas.winfo_y() + coords[1] + 1
+    xx = x + coords[2] - coords[0] - 1
+    yy = y + coords[3] - coords[1] - 1
+    
+    image = ImageGrab.grab(bbox=(x, y, xx, yy))
+
+    output = BytesIO()
+    image.save(output, format="BMP")
+    data = output.getvalue()[14:]
+    output.close()
+    save_to_clipboard(data)
 
 control = False
 def handle_key_event(event):
@@ -146,7 +182,11 @@ def handle_key_event(event):
             canvas.delete(selectTool)
             selectTool = None
         selectTool = canvas.create_rectangle(5, 5, canvas.winfo_width()-10, canvas.winfo_height()-10, width=1, outline="black", dash=(4, 1))
-
+    elif key == "c" and control:
+        copy_canvas(canvas.coords(selectTool))
+        canvas.delete(selectTool)
+    # elif key == "v" and control:
+        # paste_image()
         
 def handle_key_release(event):
     global control
@@ -157,7 +197,6 @@ def handle_key_release(event):
 bodky = []
 shapes = []
 history = []
-selectTool = None
 
 def handle_left_click(event):
     global bodky, shapes, selectTool
@@ -208,19 +247,20 @@ def undo():
 
 # create a menu
 file_menu = Menu(menubar, tearoff=0)
-file_menu.add_command(label="New", command=popupmsg)
+file_menu.add_command(label="New", command=popupmsg, accelerator="Ctrl+N")
 file_menu.add_command(label="Open")
-file_menu.add_command(label="Save", command=save_canvas)
-file_menu.add_command(label="Save as...")
+file_menu.add_command(label="Save", command=save_canvas, accelerator="Ctrl+S")
+file_menu.add_command(label="Save as...", command=save_canvas_as, accelerator="Ctrl+Shift+S")
 file_menu.add_command(label='Exit', command=okno.destroy)
 
 
 edit_menu = Menu(menubar, tearoff=0)
-edit_menu.add_command(label="Undo", command=undo)
+edit_menu.add_command(label="Undo", command=undo, accelerator="Ctrl+Z")
 edit_menu.add_separator()
-edit_menu.add_command(label="Copy")
-edit_menu.add_command(label="Paste")
-edit_menu.add_command(label="Delete", command=lambda: canvas.delete("all"))
+edit_menu.add_command(label="Copy", accelerator="Ctrl+C")
+edit_menu.add_command(label="Paste", accelerator="Ctrl+V")
+edit_menu.add_command(label="Delete", command=lambda: canvas.delete("all"), accelerator="Del")
+
 
 
 
@@ -240,5 +280,4 @@ canvas.bind_all("<Key>", handle_key_event)
 canvas.bind_all("<KeyRelease>", handle_key_release)
 canvas.bind("<B1-Motion>", handle_left_click)
 canvas.bind("<ButtonRelease>", handle_left_up)
-set_size(x, y+500)
 okno.mainloop()
