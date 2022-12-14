@@ -142,16 +142,6 @@ toolList = [pointerButton, selectButton, pencilButton, eraserButton, lineButton,
 positions_x = range(440, 440+width*len(toolList), width)
 for tool_ in toolList:
     tool_.place(x=positions_x[toolList.index(tool_)], y=5, width=30, height=30)
-# pointerButton.place(x=positions_x[0], y=5, width=30, height=30)
-# selectButton.place(x=positions_x[1], y=5, width=30, height=30)
-# pencilButton.place(x=positions_x[2], y=5, width=30, height=30)
-# eraserButton.place(x=positions_x[3], y=5, width=30, height=30)
-# lineButton.place(x=positions_x[4], y=5, width=30, height=30)
-# rectangleButton.place(x=positions_x[5], y=5, width=30, height=30)
-# rectangleFilledButton.place(x=positions_x[6], y=5, width=30, height=30)
-# circleButton.place(x=positions_x[7], y=5, width=30, height=30)
-# circleFilledButton.place(x=positions_x[8], y=5, width=30, height=30)
-# clearButton.place(x=positions_x[9], y=5, width=30, height=30)
 
 
 Hovertip(pointerButton, "Pointer Tool (v)")
@@ -510,7 +500,6 @@ def handle_left_click(event):
                 canvas.delete(selectTool)
                 selectTool = None
             s = canvas.create_rectangle(bodky[0][0], bodky[0][1], event.x, event.y, width=1, outline="black", dash=(4, 1))
-        print(tool)
         shapes.append(s)
 
 def handle_left_drag(event):
