@@ -63,3 +63,5 @@ python main.py
 ### Saving image
 * in default location (`./canvas.png`) or custom location with custom file format (`.jpng`, `.png` or even `.bmp`)
 
+### Pasting image from clipboard
+* Simply press (Ctrl+V) and your image from clipboard will be pasted on to the canvas
