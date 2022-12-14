@@ -1,4 +1,4 @@
-VERSION = "0.5"
+VERSION = "0.55"
 
 COLORS = {
     "red": (255, 0, 0),
@@ -34,3 +34,4 @@ SELECT_PATH = "./assets/select.png"
 POINTER_PATH = "./assets/pointer.png"
 ERASER_PATH = "./assets/eraser.png"
 LINE_PATH = "./assets/line.png"
+BUCKET_PATH = "./assets/bucket.png"
