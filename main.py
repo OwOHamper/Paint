@@ -47,8 +47,8 @@ def handle_color_button_click(color):
 
 
 pixel = tkinter.PhotoImage(width=1, height=1)
-def add_button(x, y, rgb):
-    return tkinter.Button(navbar, bg=rgb_color(rgb), activebackground=rgb_color(rgb), image=pixel, width=15, height=15, cursor="target",
+def add_button(x, y, rgb, width=15, height=15):
+    return tkinter.Button(navbar, bg=rgb_color(rgb), activebackground=rgb_color(rgb), image=pixel, width=width, height=height, cursor="target",
     command=lambda: handle_color_button_click(rgb_color(rgb))).place(x=x, y=y)
 
 def delete_canvas():
@@ -75,22 +75,22 @@ def delete_confirmation():
 for index, color in enumerate(COLORS):
     if index > 21:
         index -= 22
-        add_button(5+index*20, 45, COLORS[color])
+        add_button(5+index*40, 85, COLORS[color], width=40, height=40)
     elif index > 9:
         index -= 10
-        add_button(5+index*20, 25, COLORS[color])
+        add_button(5+index*40, 45, COLORS[color], width=40, height=40)
     else:
-        add_button(5+index*20, 5, COLORS[color])
+        add_button(5+index*40, 5, COLORS[color], width=40, height=40)
 
-widthSlider = tkinter.Scale(navbar, from_=1, to=50, orient=tkinter.HORIZONTAL)
+widthSlider = tkinter.Scale(navbar, from_=1, to=200, orient=tkinter.HORIZONTAL, troughcolor="black", length=250, font=("Helvetica",13,"bold"), cursor="sb_h_double_arrow", highlightbackground=None)
 widthSlider.set(1)
-widthSlider.place(x=5, y=55)
+widthSlider.place(x=445, y=43)
 
 # for i in range(5, 100, 21):
     # add_button(i, 5, "red")
 
 def load_image(image_path):
-    return ImageTk.PhotoImage(Image.open(image_path).resize((15, 15)))
+    return ImageTk.PhotoImage(Image.open(image_path).resize((28, 28)))
 
 brushImage = load_image(BRUSH_PATH)
 rectImage = load_image(RECTANGLE_PATH)
@@ -101,6 +101,7 @@ clearImage = load_image(CLEAR_PATH)
 selectImage = load_image(SELECT_PATH)
 pointerImage = load_image(POINTER_PATH)
 eraserImage = load_image(ERASER_PATH)
+lineImage = load_image(LINE_PATH)
 
 tool = "pencil"
 selectTool = None
@@ -128,28 +129,36 @@ pointerButton = tkinter.Button(navbar, image=pointerImage, width=15, height=15, 
 selectButton = tkinter.Button(navbar, image=selectImage, width=15, height=15, cursor="target", command=lambda: change_tool("select"))
 pencilButton = tkinter.Button(navbar, image=brushImage, width=15, height=15, cursor="target", command=lambda: change_tool("pencil"))
 eraserButton = tkinter.Button(navbar, image=eraserImage, width=15, height=15, cursor="target", command=lambda: change_tool("eraser"))
+lineButton = tkinter.Button(navbar, image=lineImage, width=15, height=15, cursor="target", command=lambda: change_tool("line"))
 rectangleButton = tkinter.Button(navbar, image=rectImage, width=15, height=15, cursor="target", command=lambda: change_tool("rectangle"))
 rectangleFilledButton = tkinter.Button(navbar, image=rectImageFilled, width=15, height=15, cursor="target", command=lambda: change_tool("rectangle_filled"))
 circleButton = tkinter.Button(navbar, image=circleImage, width=15, height=15, cursor="target", command=lambda: change_tool("circle"))
 circleFilledButton = tkinter.Button(navbar, image=circleImageFilled, width=15, height=15, cursor="target", command=lambda: change_tool("circle_filled"))
 clearButton = tkinter.Button(navbar, image=clearImage, width=15, height=15, cursor="target", command=delete_confirmation)
 
+width = 30
 
-pointerButton.place(x=440, y=5)
-selectButton.place(x=460, y=5)
-pencilButton.place(x=480, y=5)
-eraserButton.place(x=500, y=5)
-rectangleButton.place(x=520, y=5)
-rectangleFilledButton.place(x=540, y=5)
-circleButton.place(x=560, y=5)
-circleFilledButton.place(x=580, y=5)
-clearButton.place(x=600, y=5)
+toolList = [pointerButton, selectButton, pencilButton, eraserButton, lineButton, rectangleButton, rectangleFilledButton, circleButton, circleFilledButton, clearButton]
+positions_x = range(440, 440+width*len(toolList), width)
+for tool_ in toolList:
+    tool_.place(x=positions_x[toolList.index(tool_)], y=5, width=30, height=30)
+# pointerButton.place(x=positions_x[0], y=5, width=30, height=30)
+# selectButton.place(x=positions_x[1], y=5, width=30, height=30)
+# pencilButton.place(x=positions_x[2], y=5, width=30, height=30)
+# eraserButton.place(x=positions_x[3], y=5, width=30, height=30)
+# lineButton.place(x=positions_x[4], y=5, width=30, height=30)
+# rectangleButton.place(x=positions_x[5], y=5, width=30, height=30)
+# rectangleFilledButton.place(x=positions_x[6], y=5, width=30, height=30)
+# circleButton.place(x=positions_x[7], y=5, width=30, height=30)
+# circleFilledButton.place(x=positions_x[8], y=5, width=30, height=30)
+# clearButton.place(x=positions_x[9], y=5, width=30, height=30)
 
 
 Hovertip(pointerButton, "Pointer Tool (v)")
 Hovertip(selectButton, "Select Tool (m)")
 Hovertip(pencilButton, "Brush Tool (b)")
 Hovertip(eraserButton, "Eraser Tool (e)")
+Hovertip(lineButton, "Line Tool (l)")
 Hovertip(rectangleButton, "Rectangle Tool (r)")
 Hovertip(rectangleFilledButton, "Filled Rectangle Tool (f)")
 Hovertip(circleButton, "Circle Tool (c)")
@@ -360,8 +369,8 @@ def handle_key_event(event):
         change_tool("pencil")
     elif key == "e":
         change_tool("eraser")
-    # elif key == "l":
-        # change_tool("line")
+    elif key == "l":
+        change_tool("line")
     elif key == "r":
         change_tool("rectangle")
     elif key == "f":
@@ -486,7 +495,9 @@ def handle_left_click(event):
         for shape in shapes:
             canvas.delete(shape)
         shapes = []
-        if tool == "rectangle":
+        if tool == "line":
+            s = canvas.create_line(bodky[0][0], bodky[0][1], event.x, event.y, width=widthSlider.get(), fill=current_color)
+        elif tool == "rectangle":
             s = canvas.create_rectangle(bodky[0][0], bodky[0][1], event.x, event.y, width=widthSlider.get(), outline=current_color)
         elif tool == "rectangle_filled":
             s = canvas.create_rectangle(bodky[0][0], bodky[0][1], event.x, event.y, width=widthSlider.get(), outline=current_color, fill=current_color)
@@ -499,6 +510,7 @@ def handle_left_click(event):
                 canvas.delete(selectTool)
                 selectTool = None
             s = canvas.create_rectangle(bodky[0][0], bodky[0][1], event.x, event.y, width=1, outline="black", dash=(4, 1))
+        print(tool)
         shapes.append(s)
 
 def handle_left_drag(event):

@@ -6,6 +6,7 @@ COLORS = {
     "yellow": (255, 255, 0),
     "green": (0, 215, 0),
     "darkgreen": (0, 128, 0),
+    "green-blue": (16, 151, 151),
     'cyan': (0, 255, 255),
     "blue": (0, 55, 255),
     "darkblue": (0, 0, 130),
@@ -15,7 +16,6 @@ COLORS = {
     "magenta": (255, 0, 255),
     "purple": (160, 0, 255),
     "darkpurple": (130, 0, 255),
-    'brown': (170, 105, 10),
     'black': (0, 0, 0),
     'lightgray': (160, 160, 160),
     "gray": (105, 105, 105),
@@ -33,3 +33,4 @@ CLEAR_PATH = "./assets/clear.png"
 SELECT_PATH = "./assets/select.png"
 POINTER_PATH = "./assets/pointer.png"
 ERASER_PATH = "./assets/eraser.png"
+LINE_PATH = "./assets/line.png"
