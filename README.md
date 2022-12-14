@@ -41,14 +41,14 @@ python main.py
 
 ### Brush tool
 * Draw using any sizes or colors
-* 
+
 ![image](https://user-images.githubusercontent.com/74879467/207471948-9a53066c-5ccc-4437-b2ba-27a082d1bda4.png)
 
 * Supports Undo (Ctrl+Z)
 
 ### Shape tools
 * Draw shapes using any sizes or colors
-* 
+
 ![image](https://user-images.githubusercontent.com/74879467/207472087-40a2073b-6195-4832-9836-77952c369705.png)
 
 * Supports Undo (Ctrl+Z)
