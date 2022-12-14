@@ -33,7 +33,7 @@ python main.py
 ## Tools
 ### Select tool
 * Select any area
-* 
+
 ![image](https://user-images.githubusercontent.com/74879467/207471606-fb5f53c6-3c06-4b55-9766-a63f26ec04e6.png)
 
 * Supports copying
