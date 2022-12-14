@@ -13,7 +13,7 @@ python main.py
 ```
 
 
-## Features:
+## Features
 ### Easily configurable colo picker:
 ![image](https://user-images.githubusercontent.com/74879467/207471143-63c48c44-39b2-43cd-a033-5de9a351bfff.png)
 
