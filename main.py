@@ -6,6 +6,7 @@ import win32clipboard as clipboard
 from io import BytesIO
 from tkinter import filedialog
 import os
+import webbrowser
 
 x, y = 800, 500
 
@@ -165,6 +166,23 @@ def popupmsg():
     tkinter.Button(popup, text="Okay", command=lambda: destroy(popup, e1.get(), e2.get())).place(x=140, y=40)
     popup.mainloop()
 
+def open_link(url):
+    webbrowser.open_new_tab(url)
+
+def about_window():
+    global about
+    about = tkinter.Tk()
+    about.geometry(f"400x100")
+    about.wm_title("Skicár - About")
+    about.iconbitmap("assets/icon.ico")
+    tkinter.Label(about, text=f"Skicár version: {VERSION}").place(x=70, y=10)
+    tkinter.Label(about, text="GitHub repository: ").place(x=50, y=30)
+    link = tkinter.Label(about, text="https://github.com/OwOHamper/Paint", fg="blue", cursor="hand2")
+    link.place(x=150, y=30)
+    link.bind("<Button-1>", lambda x: open_link("https://github.com/OwOHamper/Paint"))
+    tkinter.Button(about, text="Okay", command=lambda: about.destroy()).place(x=180, y=60)
+    about.mainloop()
+
 def save_canvas():
     x = okno.winfo_rootx() + canvas.winfo_x()
     y = okno.winfo_rooty() + canvas.winfo_y()
@@ -210,7 +228,7 @@ def open_image():
         images_garbage_collection.append(image)
         im = canvas.create_image(0, 0, anchor="nw", image=image)
         #append to start instead of end
-        images = [{"image": im, "coords": [0, 0, image.width(), image.height()]}] + images
+        images.insert(0, {"image": im, "coords": [0, 0, image.width(), image.height()]})
 
 def paste_image():
     global image, images, images_garbage_collection
@@ -222,7 +240,7 @@ def paste_image():
         images_garbage_collection.append(image)
         im = canvas.create_image(0, 0, anchor="nw", image=image)
         #append to start instead of end
-        images = [{"image": im, "coords": [0, 0, image.width(), image.height()]}] + images
+        images.insert(0, {"image": im, "coords": [0, 0, image.width(), image.height()]})
         os.remove("clipboard.png")
 
 
@@ -341,6 +359,11 @@ def handle_left_click(event):
                     if initial_mouse_pos == []:
                         initial_mouse_pos = [event.x, event.y]
                         image_selected = image
+                        if image >= 1:
+                            #move image to top only visually need to change order in list too
+                            canvas.tag_raise(images[image_selected]["image"])
+                            images.insert(0, images.pop(image_selected))
+                            image_selected = 0
         else:
             coords = images[image_selected]["coords"]
 
@@ -436,7 +459,8 @@ edit_menu.add_command(label="Copy", accelerator="Ctrl+C")
 edit_menu.add_command(label="Paste", accelerator="Ctrl+V")
 edit_menu.add_command(label="Delete", command=lambda: canvas.delete("all"), accelerator="Del")
 
-
+help_menu = Menu(menubar, tearoff=0)
+help_menu.add_command(label="About", command=about_window)
 
 
 menubar.add_cascade(
@@ -447,6 +471,11 @@ menubar.add_cascade(
 menubar.add_cascade(
     label="Edit",
     menu=edit_menu
+)
+
+menubar.add_cascade(
+    label="Help",
+    menu=help_menu
 )
 
 

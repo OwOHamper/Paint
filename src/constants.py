@@ -1,3 +1,5 @@
+VERSION = "0.5"
+
 COLORS = {
     "red": (255, 0, 0),
     "orange": (255, 135, 0),
