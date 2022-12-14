@@ -61,5 +61,5 @@ python main.py
 ![image](https://user-images.githubusercontent.com/74879467/207472327-e27aac45-dffa-47db-b1af-758ee357999d.png)
 
 ### Saving image
-* in default location (`./canvas.png`) or custom location with custom file format (`.jpng`, `.png` or even `.bpm`)
+* in default location (`./canvas.png`) or custom location with custom file format (`.jpng`, `.png` or even `.bmp`)
 
