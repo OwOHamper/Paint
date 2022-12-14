@@ -1,6 +1,7 @@
 # Paint
 Paint project made in tkinter
-![image](https://user-images.githubusercontent.com/74879467/207470930-b20554c2-249d-4226-93f5-bdf116777337.png)
+![image](https://user-images.githubusercontent.com/74879467/207472537-dae9f28e-8498-4a05-8127-e534847bad9a.png)
+
 
 ### For running:
 ```
