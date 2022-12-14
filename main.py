@@ -130,7 +130,7 @@ Hovertip(rectangleButton, "Rectangle Tool (r)")
 Hovertip(rectangleFilledButton, "Filled Rectangle Tool (f)")
 Hovertip(circleButton, "Circle Tool (c)")
 Hovertip(circleFilledButton, "Filled Circle Tool (d)")
-Hovertip(clearButton, "Clear Canvas (x)")
+Hovertip(clearButton, "Clear Canvas")
 
 # tkinter.Label(navbar, text="v").place(x=440, y=25, width=15, height=15)
 
@@ -147,6 +147,12 @@ def destroy(window, e1, e2):
     x, y = int(e1), int(e2)
     set_size(x, y)
     window.destroy()
+
+def delete_canvas():
+    global images_garbage_collection, images
+    images_garbage_collection = []
+    images = []
+    canvas.delete("all")
 
 
 def popupmsg():
@@ -220,15 +226,16 @@ images = []
 images_garbage_collection = []
 def open_image():
     global image, images, images_garbage_collection
-    image = Image.open(filedialog.askopenfilename(initialdir="/", title="Select file", filetypes=(
-        ('PNG', '*.png'), ('JPEG', ('*.jpg', '*.jpeg', '*.jpe')), ('BMP', ('*.bmp', '*.jdib')))))
-    # image = image.resize((canvas.winfo_width(), canvas.winfo_height()), Image.ANTIALIAS)
-    if image != "":
-        image = ImageTk.PhotoImage(image)
-        images_garbage_collection.append(image)
-        im = canvas.create_image(0, 0, anchor="nw", image=image)
-        #append to start instead of end
-        images.insert(0, {"image": im, "coords": [0, 0, image.width(), image.height()]})
+    files = filedialog.askopenfilenames(initialdir="/", title="Select file", filetypes=(
+        ('PNG', '*.png'), ('JPEG', ('*.jpg', '*.jpeg', '*.jpe')), ('BMP', ('*.bmp', '*.jdib'))))
+    for image_file in files:
+        image = Image.open(image_file)
+        if image != "":
+            image = ImageTk.PhotoImage(image)
+            images_garbage_collection.append(image)
+            im = canvas.create_image(0, 0, anchor="nw", image=image)
+            #append to start instead of end
+            images.insert(0, {"image": im, "coords": [0, 0, image.width(), image.height()]})
 
 def paste_image():
     global image, images, images_garbage_collection
@@ -277,8 +284,6 @@ def handle_key_event(event):
         change_tool("circle")
     elif key == "d":
         change_tool("circle_filled")
-    elif key == "x":
-        canvas.delete("all")
 
 
 
@@ -401,6 +406,35 @@ def handle_left_drag(event):
         if temp_pointer is not None:
             canvas.delete(temp_pointer)
         temp_pointer = canvas.create_oval(event.x-widthSlider.get()/2, event.y-widthSlider.get()/2, event.x+widthSlider.get()/2, event.y+widthSlider.get()/2, outline="black")
+    elif tool == "pointer":
+        for image in range(len(images)):
+            coords = images[image]["coords"]
+            corner_tolerance = 10
+
+            #cursor change
+            #moving cursor
+            if coords[0] < event.x < coords[2] and coords[1] < event.y < coords[3]:
+                canvas.config(cursor="fleur")
+                break
+            #resizing cursor
+            elif coords[0]-corner_tolerance < event.x < coords[0]+corner_tolerance and coords[1]-corner_tolerance < event.y < coords[1]+corner_tolerance:
+                canvas.config(cursor="top_left_corner")
+                break
+            elif coords[2]-corner_tolerance < event.x < coords[2]+corner_tolerance and coords[1]-corner_tolerance < event.y < coords[1]+corner_tolerance:
+                canvas.config(cursor="top_right_corner")
+                break
+            elif coords[0]-corner_tolerance < event.x < coords[0]+corner_tolerance and coords[3]-corner_tolerance < event.y < coords[3]+corner_tolerance:
+                canvas.config(cursor="bottom_left_corner")
+                break
+            elif coords[2]-corner_tolerance < event.x < coords[2]+corner_tolerance and coords[3]-corner_tolerance < event.y < coords[3]+corner_tolerance:
+                canvas.config(cursor="bottom_right_corner")
+                break
+            #default cursor
+            else:
+                canvas.config(cursor="arrow")
+
+
+
 
 def handle_left_up(event):
     global bodky, shapes, selectTool, draw_history, initial_mouse_pos, image_selected, total_image_move
@@ -457,7 +491,7 @@ edit_menu.add_command(label="Undo", command=undo, accelerator="Ctrl+Z")
 edit_menu.add_separator()
 edit_menu.add_command(label="Copy", accelerator="Ctrl+C")
 edit_menu.add_command(label="Paste", accelerator="Ctrl+V")
-edit_menu.add_command(label="Delete", command=lambda: canvas.delete("all"), accelerator="Del")
+edit_menu.add_command(label="Delete", command=delete_canvas, accelerator="Del")
 
 help_menu = Menu(menubar, tearoff=0)
 help_menu.add_command(label="About", command=about_window)
