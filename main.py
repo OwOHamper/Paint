@@ -24,7 +24,7 @@ navbar_y_size = 100
 navbar = tkinter.Canvas(width=x, height=navbar_y_size, bg="gray")
 navbar.place(x=0, y=0)
 
-canvas = tkinter.Canvas(width=x, height=y-navbar_y_size, cursor="pencil", bg="white")
+canvas = tkinter.Canvas(width=x, height=y-navbar_y_size, cursor="none", bg="white")
 canvas.place(x=0, y=navbar_y_size)
 
 def set_size(x, y):
@@ -79,24 +79,59 @@ circleImage = load_image(CIRCLE_PATH)
 circleImageFilled = load_image(CIRCLE_FILLED_PATH)
 clearImage = load_image(CLEAR_PATH)
 selectImage = load_image(SELECT_PATH)
+pointerImage = load_image(POINTER_PATH)
+eraserImage = load_image(ERASER_PATH)
 
 tool = "pencil"
 selectTool = None
 def change_tool(new_tool):
     global tool, selectTool
+    if new_tool == "pencil" or new_tool == "eraser":
+        canvas.config(cursor="none")
+    elif new_tool == "pointer":
+        canvas.config(cursor="fleur")
+    else:
+        canvas.config(cursor="crosshair")
     if selectTool != None and new_tool != "select":
         canvas.delete(selectTool)
         selectTool = None
     tool = new_tool
 
+from idlelib.tooltip import Hovertip
 
-tkinter.Button(navbar, image=selectImage, width=15, height=15, cursor="target", command=lambda: change_tool("select")).place(x=460, y=5)
-tkinter.Button(navbar, image=brushImage, width=15, height=15, cursor="target", command=lambda: change_tool("pencil")).place(x=480, y=5)
-tkinter.Button(navbar, image=rectImage, width=15, height=15, cursor="target", command=lambda: change_tool("rectangle")).place(x=500, y=5)
-tkinter.Button(navbar, image=rectImageFilled, width=15, height=15, cursor="target", command=lambda: change_tool("rectangle_filled")).place(x=520, y=5)
-tkinter.Button(navbar, image=circleImage, width=15, height=15, cursor="target", command=lambda: change_tool("circle")).place(x=540, y=5)
-tkinter.Button(navbar, image=circleImageFilled, width=15, height=15, cursor="target", command=lambda: change_tool("circle_filled")).place(x=560, y=5)
-tkinter.Button(navbar, image=clearImage, width=15, height=15, cursor="target", command=lambda: canvas.delete("all")).place(x=580, y=5)
+pointerButton = tkinter.Button(navbar, image=pointerImage, width=15, height=15, cursor="target", command=lambda: change_tool("pointer"))
+selectButton = tkinter.Button(navbar, image=selectImage, width=15, height=15, cursor="target", command=lambda: change_tool("select"))
+pencilButton = tkinter.Button(navbar, image=brushImage, width=15, height=15, cursor="target", command=lambda: change_tool("pencil"))
+eraserButton = tkinter.Button(navbar, image=eraserImage, width=15, height=15, cursor="target", command=lambda: change_tool("eraser"))
+rectangleButton = tkinter.Button(navbar, image=rectImage, width=15, height=15, cursor="target", command=lambda: change_tool("rectangle"))
+rectangleFilledButton = tkinter.Button(navbar, image=rectImageFilled, width=15, height=15, cursor="target", command=lambda: change_tool("rectangle_filled"))
+circleButton = tkinter.Button(navbar, image=circleImage, width=15, height=15, cursor="target", command=lambda: change_tool("circle"))
+circleFilledButton = tkinter.Button(navbar, image=circleImageFilled, width=15, height=15, cursor="target", command=lambda: change_tool("circle_filled"))
+clearButton = tkinter.Button(navbar, image=clearImage, width=15, height=15, cursor="target", command=lambda: canvas.delete("all"))
+
+
+pointerButton.place(x=440, y=5)
+selectButton.place(x=460, y=5)
+pencilButton.place(x=480, y=5)
+eraserButton.place(x=500, y=5)
+rectangleButton.place(x=520, y=5)
+rectangleFilledButton.place(x=540, y=5)
+circleButton.place(x=560, y=5)
+circleFilledButton.place(x=580, y=5)
+clearButton.place(x=600, y=5)
+
+
+Hovertip(pointerButton, "Pointer Tool (v)")
+Hovertip(selectButton, "Select Tool (m)")
+Hovertip(pencilButton, "Brush Tool (b)")
+Hovertip(eraserButton, "Eraser Tool (e)")
+Hovertip(rectangleButton, "Rectangle Tool (r)")
+Hovertip(rectangleFilledButton, "Filled Rectangle Tool (f)")
+Hovertip(circleButton, "Circle Tool (c)")
+Hovertip(circleFilledButton, "Filled Circle Tool (d)")
+Hovertip(clearButton, "Clear Canvas (x)")
+
+# tkinter.Label(navbar, text="v").place(x=440, y=25, width=15, height=15)
 
 
 def save_to_clipboard(image):
@@ -163,23 +198,31 @@ def copy_canvas(coords):
     data = output.getvalue()[14:]
     output.close()
     save_to_clipboard(data)
-
+images = []
+images_garbage_collection = []
 def open_image():
-    global image
+    global image, images, images_garbage_collection
     image = Image.open(filedialog.askopenfilename(initialdir="/", title="Select file", filetypes=(
         ('PNG', '*.png'), ('JPEG', ('*.jpg', '*.jpeg', '*.jpe')), ('BMP', ('*.bmp', '*.jdib')))))
     # image = image.resize((canvas.winfo_width(), canvas.winfo_height()), Image.ANTIALIAS)
     if image != "":
         image = ImageTk.PhotoImage(image)
-        canvas.create_image(0, 0, anchor="nw", image=image)
+        images_garbage_collection.append(image)
+        im = canvas.create_image(0, 0, anchor="nw", image=image)
+        #append to start instead of end
+        images = [{"image": im, "coords": [0, 0, image.width(), image.height()]}] + images
 
 def paste_image():
+    global image, images, images_garbage_collection
     image = ImageGrab.grabclipboard()
     if image is not None:
         image.save("clipboard.png")
         image = Image.open("clipboard.png")
         image = ImageTk.PhotoImage(image)
-        canvas.create_image(0, 0, anchor="nw", image=image)
+        images_garbage_collection.append(image)
+        im = canvas.create_image(0, 0, anchor="nw", image=image)
+        #append to start instead of end
+        images = [{"image": im, "coords": [0, 0, image.width(), image.height()]}] + images
         os.remove("clipboard.png")
 
 
@@ -189,10 +232,37 @@ def handle_key_event(event):
     global control, shift, selectTool
     key = event.keysym
 
+    #modifiers
     if key == "Control_L":
         control = True
     if key == "Shift_L":
         shift = True
+
+    #tools
+    if key == "v":
+        change_tool("pointer")
+    elif key == "m":
+        change_tool("select")
+    elif key == "b":
+        change_tool("pencil")
+    elif key == "b":
+        change_tool("pencil")
+    elif key == "e":
+        change_tool("eraser")
+    # elif key == "l":
+        # change_tool("line")
+    elif key == "r":
+        change_tool("rectangle")
+    elif key == "f":
+        change_tool("rectangle_filled")
+    elif key == "c":
+        change_tool("circle")
+    elif key == "d":
+        change_tool("circle_filled")
+    elif key == "x":
+        canvas.delete("all")
+
+
 
     if key == "Delete":
         if selectTool is not None:
@@ -232,20 +302,55 @@ bodky = []
 shapes = []
 history = []
 draw_history = []
-
+initial_mouse_pos = []
+image_selected = None
+temp_pointer = None
+total_image_move = [0, 0]
 def handle_left_click(event):
-    global bodky, shapes, selectTool, draw_history
-    if tool == "pencil":
+    global bodky, shapes, selectTool, draw_history, initial_mouse_pos, image_selected, temp_pointer, total_image_move
+
+    if tool == "pencil" or tool == "eraser":
         if widthSlider.get() < 3:
             bodky.append([event.x, event.y])
             if len(bodky) >= 2:
-                line = canvas.create_line(bodky[0], bodky[1], width=widthSlider.get(), fill=current_color)
+                if tool == "pencil":
+                    line = canvas.create_line(bodky[0], bodky[1], width=widthSlider.get(), fill=current_color)
+                else:
+                    line = canvas.create_line(bodky[0], bodky[1], width=widthSlider.get(), fill="white")
                 draw_history.append(line)
                 bodky.pop(0)
         else:
-            oval = canvas.create_oval(event.x-widthSlider.get()/2, event.y-widthSlider.get()/2, event.x+widthSlider.get()/2, event.y+widthSlider.get()/2, fill=current_color, outline=current_color)
+            if tool == "pencil":
+                oval = canvas.create_oval(event.x-widthSlider.get()/2, event.y-widthSlider.get()/2, event.x+widthSlider.get()/2, event.y+widthSlider.get()/2, fill=current_color, outline=current_color)
+            else:
+                oval = canvas.create_oval(event.x-widthSlider.get()/2, event.y-widthSlider.get()/2, event.x+widthSlider.get()/2, event.y+widthSlider.get()/2, fill="white", outline="white")
             draw_history.append(oval)
+        if tool == "eraser":
+            if temp_pointer is not None:
+                canvas.delete(temp_pointer)
+            temp_pointer = canvas.create_oval(event.x-widthSlider.get()/2, event.y-widthSlider.get()/2, event.x+widthSlider.get()/2, event.y+widthSlider.get()/2, outline="black")
+
     # elif tool == "rectangle":
+    elif tool == "pointer":
+        if image_selected is None:
+            #reverse list so images on top will be prioritized
+            for image in range(len(images)):
+                coords = images[image]["coords"]
+                #get image height and width
+                if coords[0] < event.x < coords[2] and coords[1] < event.y < coords[3]:
+                    if initial_mouse_pos == []:
+                        initial_mouse_pos = [event.x, event.y]
+                        image_selected = image
+        else:
+            coords = images[image_selected]["coords"]
+
+            x_diff = event.x-initial_mouse_pos[0]
+            y_diff = event.y-initial_mouse_pos[1]
+            canvas.move(images[image_selected]["image"], x_diff, y_diff)
+            total_image_move[0] += x_diff
+            total_image_move[1] += y_diff
+            images[image_selected]["coords"] = [coords[0]+x_diff, coords[1]+y_diff, coords[2]+x_diff, coords[3]+y_diff]
+            initial_mouse_pos = [event.x, event.y]
     else:
         if len(bodky) < 1:
             bodky.append([event.x, event.y])
@@ -267,8 +372,15 @@ def handle_left_click(event):
             s = canvas.create_rectangle(bodky[0][0], bodky[0][1], event.x, event.y, width=1, outline="black", dash=(4, 1))
         shapes.append(s)
 
+def handle_left_drag(event):
+    global temp_pointer
+    if tool == "pencil" or tool == "eraser":
+        if temp_pointer is not None:
+            canvas.delete(temp_pointer)
+        temp_pointer = canvas.create_oval(event.x-widthSlider.get()/2, event.y-widthSlider.get()/2, event.x+widthSlider.get()/2, event.y+widthSlider.get()/2, outline="black")
+
 def handle_left_up(event):
-    global bodky, shapes, selectTool, draw_history
+    global bodky, shapes, selectTool, draw_history, initial_mouse_pos, image_selected, total_image_move
     if tool == "select":
         selectTool = shapes[0]
         # canvas.delete(shapes[0])
@@ -280,6 +392,11 @@ def handle_left_up(event):
         history.append(shapes)
     if draw_history != []:
         history.append(draw_history)
+    if total_image_move != [0, 0]:
+        history.append({"type": "image_move", "image": image_selected, "move": total_image_move})
+    total_image_move = [0, 0]
+    initial_mouse_pos = []
+    image_selected = None
     shapes = []
     bodky = []
     draw_history = []
@@ -291,6 +408,13 @@ def undo():
     if type(history[-1]) == list:
         for line in history[-1]:
             canvas.delete(line)
+    elif type(history[-1]) == dict:
+        if history[-1].get("type") == "image_move":
+            x_diff = history[-1]["move"][0]
+            y_diff = history[-1]["move"][1]
+            canvas.move(images[history[-1]["image"]]["image"], -x_diff, -y_diff)
+            coords = images[history[-1]["image"]]["coords"]
+            images[history[-1]["image"]]["coords"] = [coords[0]-x_diff, coords[1]-y_diff, coords[2]-x_diff, coords[3]-y_diff]
     else:
         canvas.delete(history[-1])
 
@@ -331,5 +455,6 @@ canvas.bind_all("<Key>", handle_key_event)
 canvas.bind_all("<KeyRelease>", handle_key_release)
 canvas.bind("<Button-1>", handle_left_click)
 canvas.bind("<B1-Motion>", handle_left_click)
+canvas.bind("<Motion>", handle_left_drag)
 canvas.bind("<ButtonRelease>", handle_left_up)
 okno.mainloop()
