@@ -5,6 +5,7 @@ from PIL import Image, ImageTk, ImageGrab
 import win32clipboard as clipboard
 from io import BytesIO
 from tkinter import filedialog
+import os
 
 x, y = 800, 500
 
@@ -172,6 +173,15 @@ def open_image():
         image = ImageTk.PhotoImage(image)
         canvas.create_image(0, 0, anchor="nw", image=image)
 
+def paste_image():
+    image = ImageGrab.grabclipboard()
+    if image is not None:
+        image.save("clipboard.png")
+        image = Image.open("clipboard.png")
+        image = ImageTk.PhotoImage(image)
+        canvas.create_image(0, 0, anchor="nw", image=image)
+        os.remove("clipboard.png")
+
 
 control = False
 shift = False
@@ -205,8 +215,8 @@ def handle_key_event(event):
         save_canvas()
     elif key == "s" and control and shift:
         save_canvas_as()
-    # elif key == "v" and control:
-        # paste_image()
+    elif key == "v" and control:
+        paste_image()
     elif key == "z" and control:
         undo()
         
@@ -260,7 +270,6 @@ def handle_left_click(event):
 def handle_left_up(event):
     global bodky, shapes, selectTool, draw_history
     if tool == "select":
-        print(shapes)
         selectTool = shapes[0]
         # canvas.delete(shapes[0])
         # bodky.append([event.x, event.y])
