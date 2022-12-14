@@ -90,7 +90,7 @@ def change_tool(new_tool):
     if new_tool == "pencil" or new_tool == "eraser":
         canvas.config(cursor="none")
     elif new_tool == "pointer":
-        canvas.config(cursor="fleur")
+        canvas.config(cursor="arrow")
     else:
         canvas.config(cursor="crosshair")
     if selectTool != None and new_tool != "select":
@@ -149,8 +149,8 @@ def destroy(window, e1, e2):
     window.destroy()
 
 def delete_canvas():
-    global images_garbage_collection, images
-    images_garbage_collection = []
+    global images
+    # images_garbage_collection = []
     images = []
     canvas.delete("all")
 
@@ -223,33 +223,51 @@ def copy_canvas(coords):
     output.close()
     save_to_clipboard(data)
 images = []
-images_garbage_collection = []
+# images_garbage_collection = []
 def open_image():
-    global image, images, images_garbage_collection
+    global image, images
     files = filedialog.askopenfilenames(initialdir="/", title="Select file", filetypes=(
         ('PNG', '*.png'), ('JPEG', ('*.jpg', '*.jpeg', '*.jpe')), ('BMP', ('*.bmp', '*.jdib'))))
     for image_file in files:
-        image = Image.open(image_file)
-        if image != "":
-            image = ImageTk.PhotoImage(image)
-            images_garbage_collection.append(image)
+        pil_image = Image.open(image_file)
+        if pil_image != "":
+            image = ImageTk.PhotoImage(pil_image)
+            # images_garbage_collection.append(image)
             im = canvas.create_image(0, 0, anchor="nw", image=image)
             #append to start instead of end
-            images.insert(0, {"image": im, "coords": [0, 0, image.width(), image.height()]})
+            images.insert(0, {"image": im, "coords": [0, 0, image.width(), image.height()], "pil_image": pil_image, "photo_image": image})
 
 def paste_image():
-    global image, images, images_garbage_collection
+    global image, images
     image = ImageGrab.grabclipboard()
     if image is not None:
         image.save("clipboard.png")
-        image = Image.open("clipboard.png")
-        image = ImageTk.PhotoImage(image)
-        images_garbage_collection.append(image)
+        pil_image = Image.open("clipboard.png")
+        image = ImageTk.PhotoImage(pil_image)
+        # images_garbage_collection.append(image)
         im = canvas.create_image(0, 0, anchor="nw", image=image)
         #append to start instead of end
-        images.insert(0, {"image": im, "coords": [0, 0, image.width(), image.height()]})
+        images.insert(0, {"image": im, "coords": [0, 0, image.width(), image.height()], "pil_image": pil_image, "photo_image": image})
         os.remove("clipboard.png")
 
+def resize_pil_image(pil_image, coords, corner, x_diff, y_diff):
+    if corner == "top_left":
+        print(coords)
+        print(x_diff, y_diff)
+        width = coords[2] - coords[0] - x_diff
+        height = coords[3] - coords[1] - y_diff
+        print(width, height)
+        # width = 200
+        # height = 200
+        pos_x = coords[0] + x_diff
+        pos_y = coords[1] + y_diff
+        # pil_image_reiszed = pil_image.resize((coords[2] - x_diff, coords[3] - y_diff), Image.Resampling.LANCZOS)
+        pil_image_reiszed = pil_image.resize((width, height), Image.Resampling.LANCZOS)
+        photo_image = ImageTk.PhotoImage(pil_image_reiszed)
+        image = canvas.create_image(pos_x, pos_y, anchor="nw", image=photo_image)
+        print("old: ", coords)
+        print("new: ", [pos_x, pos_y, pos_x + width, pos_y + height])
+        return {"image": image, "coords": [pos_x, pos_y, pos_x + width, pos_y + height], "pil_image": pil_image_reiszed, "photo_image": photo_image}
 
 control = False
 shift = False
@@ -328,9 +346,11 @@ draw_history = []
 initial_mouse_pos = []
 image_selected = None
 temp_pointer = None
+pointer_status = None
 total_image_move = [0, 0]
 def handle_left_click(event):
     global bodky, shapes, selectTool, draw_history, initial_mouse_pos, image_selected, temp_pointer, total_image_move
+    global a
 
     if tool == "pencil" or tool == "eraser":
         if widthSlider.get() < 3:
@@ -371,14 +391,18 @@ def handle_left_click(event):
                             image_selected = 0
         else:
             coords = images[image_selected]["coords"]
-
             x_diff = event.x-initial_mouse_pos[0]
             y_diff = event.y-initial_mouse_pos[1]
-            canvas.move(images[image_selected]["image"], x_diff, y_diff)
-            total_image_move[0] += x_diff
-            total_image_move[1] += y_diff
-            images[image_selected]["coords"] = [coords[0]+x_diff, coords[1]+y_diff, coords[2]+x_diff, coords[3]+y_diff]
-            initial_mouse_pos = [event.x, event.y]
+            if pointer_status == "move":
+                canvas.move(images[image_selected]["image"], x_diff, y_diff)
+                total_image_move[0] += x_diff
+                total_image_move[1] += y_diff
+                images[image_selected]["coords"] = [coords[0]+x_diff, coords[1]+y_diff, coords[2]+x_diff, coords[3]+y_diff]
+                initial_mouse_pos = [event.x, event.y]
+            elif pointer_status.startswith("resize"):
+                if pointer_status == "resize-top-left":
+                    images[image_selected] = resize_pil_image(images[image_selected]["pil_image"], images[image_selected]["coords"], "top_left", x_diff, y_diff)
+                    initial_mouse_pos = [event.x, event.y]
     else:
         if len(bodky) < 1:
             bodky.append([event.x, event.y])
@@ -401,12 +425,14 @@ def handle_left_click(event):
         shapes.append(s)
 
 def handle_left_drag(event):
-    global temp_pointer
+    global temp_pointer, pointer_status
     if tool == "pencil" or tool == "eraser":
         if temp_pointer is not None:
             canvas.delete(temp_pointer)
         temp_pointer = canvas.create_oval(event.x-widthSlider.get()/2, event.y-widthSlider.get()/2, event.x+widthSlider.get()/2, event.y+widthSlider.get()/2, outline="black")
     elif tool == "pointer":
+        if len(images) == 0:
+            canvas.config(cursor="arrow")
         for image in range(len(images)):
             coords = images[image]["coords"]
             corner_tolerance = 10
@@ -415,19 +441,24 @@ def handle_left_drag(event):
             #moving cursor
             if coords[0] < event.x < coords[2] and coords[1] < event.y < coords[3]:
                 canvas.config(cursor="fleur")
+                pointer_status = "move"
                 break
             #resizing cursor
             elif coords[0]-corner_tolerance < event.x < coords[0]+corner_tolerance and coords[1]-corner_tolerance < event.y < coords[1]+corner_tolerance:
                 canvas.config(cursor="top_left_corner")
+                pointer_status = "resize-top-left"
                 break
             elif coords[2]-corner_tolerance < event.x < coords[2]+corner_tolerance and coords[1]-corner_tolerance < event.y < coords[1]+corner_tolerance:
                 canvas.config(cursor="top_right_corner")
+                pointer_status = "resize-top-right"
                 break
             elif coords[0]-corner_tolerance < event.x < coords[0]+corner_tolerance and coords[3]-corner_tolerance < event.y < coords[3]+corner_tolerance:
                 canvas.config(cursor="bottom_left_corner")
+                pointer_status = "resize-bottom-left"
                 break
             elif coords[2]-corner_tolerance < event.x < coords[2]+corner_tolerance and coords[3]-corner_tolerance < event.y < coords[3]+corner_tolerance:
                 canvas.config(cursor="bottom_right_corner")
+                pointer_status = "resize-bottom-right"
                 break
             #default cursor
             else:
