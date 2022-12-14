@@ -53,11 +53,15 @@ def add_button(x, y, rgb, width=15, height=15):
     command=lambda: handle_color_button_click(rgb_color(rgb))).place(x=x, y=y)
 
 def delete_canvas():
-    global images
+    global images, current_color, bg_color
     confirmation.destroy()
     # images_garbage_collection = []
     images = []
     canvas.delete("all")
+    current_color = "black"
+    bg_color = "white"
+    canvas.configure(bg=current_color)
+    bg_color = current_color
 
 
 def delete_confirmation():
@@ -247,34 +251,35 @@ def copy_canvas(coords):
     output.close()
     save_to_clipboard(data)
 images = []
-# images_garbage_collection = []
+static_image_id = 0
 def open_image():
-    global image, images
+    global image, images, static_image_id
     files = filedialog.askopenfilenames(initialdir="/", title="Select file", filetypes=(
         ('PNG', '*.png'), ('JPEG', ('*.jpg', '*.jpeg', '*.jpe')), ('BMP', ('*.bmp', '*.jdib'))))
     for image_file in files:
         pil_image = Image.open(image_file)
         if pil_image != "":
             image = ImageTk.PhotoImage(pil_image)
-            # images_garbage_collection.append(image)
             im = canvas.create_image(0, 0, anchor="nw", image=image)
             #append to start instead of end
-            images.insert(0, {"image": im, "coords": [0, 0, image.width(), image.height()], "pil_image": pil_image, "photo_image": image})
+            images.insert(0, {"image": im, "coords": [0, 0, image.width(), image.height()], "pil_image": pil_image, "photo_image": image, "static_id": static_image_id})
+            static_image_id += 1
+
 
 def paste_image():
-    global image, images
+    global image, images, static_image_id
     image = ImageGrab.grabclipboard()
     if image is not None:
         image.save("clipboard.png")
         pil_image = Image.open("clipboard.png")
         image = ImageTk.PhotoImage(pil_image)
-        # images_garbage_collection.append(image)
         im = canvas.create_image(0, 0, anchor="nw", image=image)
         #append to start instead of end
-        images.insert(0, {"image": im, "coords": [0, 0, image.width(), image.height()], "pil_image": pil_image, "photo_image": image})
+        images.insert(0, {"image": im, "coords": [0, 0, image.width(), image.height()], "pil_image": pil_image, "photo_image": image, "static_id": static_image_id})
+        static_image_id += 1
         os.remove("clipboard.png")
 
-def resize_pil_image(pil_image, coords, corner, x_diff, y_diff):
+def resize_pil_image(pil_image, coords, corner, x_diff, y_diff, static_id):
     # try:
     if corner == "top_left":
         width = coords[2] - coords[0] - x_diff
@@ -291,7 +296,7 @@ def resize_pil_image(pil_image, coords, corner, x_diff, y_diff):
         pil_image_reiszed = pil_image.resize((width, height), Image.Resampling.LANCZOS)
         photo_image = ImageTk.PhotoImage(pil_image_reiszed)
         image = canvas.create_image(pos_x, pos_y, anchor="nw", image=photo_image)
-        return {"image": image, "coords": [pos_x, pos_y, pos_x + width, pos_y + height], "pil_image": pil_image, "photo_image": photo_image}
+        return {"image": image, "coords": [pos_x, pos_y, pos_x + width, pos_y + height], "pil_image": pil_image, "photo_image": photo_image, "static_id": static_id}
     elif corner == "top_right":
         width = coords[2] - coords[0] + x_diff
         height = coords[3] - coords[1] - y_diff
@@ -306,7 +311,7 @@ def resize_pil_image(pil_image, coords, corner, x_diff, y_diff):
         pil_image_reiszed = pil_image.resize((width, height), Image.Resampling.LANCZOS)
         photo_image = ImageTk.PhotoImage(pil_image_reiszed)
         image = canvas.create_image(pos_x, pos_y, anchor="nw", image=photo_image)
-        return {"image": image, "coords": [pos_x, pos_y, pos_x + width, pos_y + height], "pil_image": pil_image, "photo_image": photo_image}
+        return {"image": image, "coords": [pos_x, pos_y, pos_x + width, pos_y + height], "pil_image": pil_image, "photo_image": photo_image, "static_id": static_id}
     elif corner == "bottom_left":
         width = coords[2] - coords[0] - x_diff
         height = coords[3] - coords[1] + y_diff
@@ -321,7 +326,7 @@ def resize_pil_image(pil_image, coords, corner, x_diff, y_diff):
         pil_image_reiszed = pil_image.resize((width, height), Image.Resampling.LANCZOS)
         photo_image = ImageTk.PhotoImage(pil_image_reiszed)
         image = canvas.create_image(pos_x, pos_y, anchor="nw", image=photo_image)
-        return {"image": image, "coords": [pos_x, pos_y, pos_x + width, pos_y + height], "pil_image": pil_image, "photo_image": photo_image}
+        return {"image": image, "coords": [pos_x, pos_y, pos_x + width, pos_y + height], "pil_image": pil_image, "photo_image": photo_image, "static_id": static_id}
     elif corner == "bottom_right":
         width = coords[2] - coords[0] + x_diff
         height = coords[3] - coords[1] + y_diff
@@ -335,7 +340,7 @@ def resize_pil_image(pil_image, coords, corner, x_diff, y_diff):
         pil_image_reiszed = pil_image.resize((width, height), Image.Resampling.LANCZOS)
         photo_image = ImageTk.PhotoImage(pil_image_reiszed)
         image = canvas.create_image(pos_x, pos_y, anchor="nw", image=photo_image)
-        return {"image": image, "coords": [pos_x, pos_y, pos_x + width, pos_y + height], "pil_image": pil_image, "photo_image": photo_image}
+        return {"image": image, "coords": [pos_x, pos_y, pos_x + width, pos_y + height], "pil_image": pil_image, "photo_image": photo_image, "static_id": static_id}
     elif corner == "top":
         width = coords[2] - coords[0]
         height = coords[3] - coords[1] - y_diff
@@ -348,7 +353,7 @@ def resize_pil_image(pil_image, coords, corner, x_diff, y_diff):
         pil_image_reiszed = pil_image.resize((width, height), Image.Resampling.LANCZOS)
         photo_image = ImageTk.PhotoImage(pil_image_reiszed)
         image = canvas.create_image(pos_x, pos_y, anchor="nw", image=photo_image)
-        return {"image": image, "coords": [pos_x, pos_y, pos_x + width, pos_y + height], "pil_image": pil_image, "photo_image": photo_image}
+        return {"image": image, "coords": [pos_x, pos_y, pos_x + width, pos_y + height], "pil_image": pil_image, "photo_image": photo_image, "static_id": static_id}
     elif corner == "bottom":
         width = coords[2] - coords[0]
         height = coords[3] - coords[1] + y_diff
@@ -360,7 +365,7 @@ def resize_pil_image(pil_image, coords, corner, x_diff, y_diff):
         pil_image_reiszed = pil_image.resize((width, height), Image.Resampling.LANCZOS)
         photo_image = ImageTk.PhotoImage(pil_image_reiszed)
         image = canvas.create_image(pos_x, pos_y, anchor="nw", image=photo_image)
-        return {"image": image, "coords": [pos_x, pos_y, pos_x + width, pos_y + height], "pil_image": pil_image, "photo_image": photo_image}
+        return {"image": image, "coords": [pos_x, pos_y, pos_x + width, pos_y + height], "pil_image": pil_image, "photo_image": photo_image, "static_id": static_id}
     elif corner == "left":
         width = coords[2] - coords[0] - x_diff
         height = coords[3] - coords[1]
@@ -373,7 +378,7 @@ def resize_pil_image(pil_image, coords, corner, x_diff, y_diff):
         pil_image_reiszed = pil_image.resize((width, height), Image.Resampling.LANCZOS)
         photo_image = ImageTk.PhotoImage(pil_image_reiszed)
         image = canvas.create_image(pos_x, pos_y, anchor="nw", image=photo_image)
-        return {"image": image, "coords": [pos_x, pos_y, pos_x + width, pos_y + height], "pil_image": pil_image, "photo_image": photo_image}
+        return {"image": image, "coords": [pos_x, pos_y, pos_x + width, pos_y + height], "pil_image": pil_image, "photo_image": photo_image, "static_id": static_id}
     elif corner == "right":
         width = coords[2] - coords[0] + x_diff
         height = coords[3] - coords[1]
@@ -385,7 +390,7 @@ def resize_pil_image(pil_image, coords, corner, x_diff, y_diff):
         pil_image_reiszed = pil_image.resize((width, height), Image.Resampling.LANCZOS)
         photo_image = ImageTk.PhotoImage(pil_image_reiszed)
         image = canvas.create_image(pos_x, pos_y, anchor="nw", image=photo_image)
-        return {"image": image, "coords": [pos_x, pos_y, pos_x + width, pos_y + height], "pil_image": pil_image, "photo_image": photo_image}
+        return {"image": image, "coords": [pos_x, pos_y, pos_x + width, pos_y + height], "pil_image": pil_image, "photo_image": photo_image, "static_id": static_id}
     elif corner == "static":
         width = coords[2] - coords[0]
         height = coords[3] - coords[1]
@@ -395,7 +400,7 @@ def resize_pil_image(pil_image, coords, corner, x_diff, y_diff):
         pil_image_reiszed = pil_image.resize((width, height), Image.Resampling.LANCZOS)
         photo_image = ImageTk.PhotoImage(pil_image_reiszed)
         image = canvas.create_image(pos_x, pos_y, anchor="nw", image=photo_image)
-        return {"image": image, "coords": [pos_x, pos_y, pos_x + width, pos_y + height], "pil_image": pil_image, "photo_image": photo_image}
+        return {"image": image, "coords": [pos_x, pos_y, pos_x + width, pos_y + height], "pil_image": pil_image, "photo_image": photo_image, "static_id": static_id}
 
 control = False
 shift = False
@@ -480,9 +485,10 @@ temp_pointer = None
 image_select_outline = None
 total_image_move = [0, 0]
 start_image_coords = [0, 0]
+old_bg_color = None
 def handle_left_click(event):
     global bodky, shapes, selectTool, draw_history, initial_mouse_pos, image_selected, temp_pointer, total_image_move, bg_color
-    global image_select_outline, start_image_coords
+    global image_select_outline, start_image_coords, old_bg_color
 
     if tool == "pencil" or tool == "eraser":
         if widthSlider.get() < 3:
@@ -540,34 +546,34 @@ def handle_left_click(event):
                 if pointer_status == "resize-top-left":
                     if shift:
                         x_diff = y_diff
-                    images[image_selected] = resize_pil_image(images[image_selected]["pil_image"], images[image_selected]["coords"], "top_left", x_diff, y_diff)
+                    images[image_selected] = resize_pil_image(images[image_selected]["pil_image"], images[image_selected]["coords"], "top_left", x_diff, y_diff, static_id=images[image_selected]["static_id"])
                     initial_mouse_pos = [event.x, event.y]
                 elif pointer_status == "resize-top-right":
                     if shift:
                         x_diff = -y_diff
-                    images[image_selected] = resize_pil_image(images[image_selected]["pil_image"], images[image_selected]["coords"], "top_right", x_diff, y_diff)
+                    images[image_selected] = resize_pil_image(images[image_selected]["pil_image"], images[image_selected]["coords"], "top_right", x_diff, y_diff, static_id=images[image_selected]["static_id"])
                     initial_mouse_pos = [event.x, event.y]
                 elif pointer_status == "resize-bottom-left":
                     if shift:
                         x_diff = -y_diff
-                    images[image_selected] = resize_pil_image(images[image_selected]["pil_image"], images[image_selected]["coords"], "bottom_left", x_diff, y_diff)
+                    images[image_selected] = resize_pil_image(images[image_selected]["pil_image"], images[image_selected]["coords"], "bottom_left", x_diff, y_diff, static_id=images[image_selected]["static_id"])
                     initial_mouse_pos = [event.x, event.y]
                 elif pointer_status == "resize-bottom-right":
                     if shift:
                         x_diff = y_diff
-                    images[image_selected] = resize_pil_image(images[image_selected]["pil_image"], images[image_selected]["coords"], "bottom_right", x_diff, y_diff)
+                    images[image_selected] = resize_pil_image(images[image_selected]["pil_image"], images[image_selected]["coords"], "bottom_right", x_diff, y_diff, static_id=images[image_selected]["static_id"])
                     initial_mouse_pos = [event.x, event.y]
                 elif pointer_status == "resize-top":
-                    images[image_selected] = resize_pil_image(images[image_selected]["pil_image"], images[image_selected]["coords"], "top", x_diff, y_diff)
+                    images[image_selected] = resize_pil_image(images[image_selected]["pil_image"], images[image_selected]["coords"], "top", x_diff, y_diff, static_id=images[image_selected]["static_id"])
                     initial_mouse_pos = [event.x, event.y]
                 elif pointer_status == "resize-bottom":
-                    images[image_selected] = resize_pil_image(images[image_selected]["pil_image"], images[image_selected]["coords"], "bottom", x_diff, y_diff)
+                    images[image_selected] = resize_pil_image(images[image_selected]["pil_image"], images[image_selected]["coords"], "bottom", x_diff, y_diff, static_id=images[image_selected]["static_id"])
                     initial_mouse_pos = [event.x, event.y]
                 elif pointer_status == "resize-left":
-                    images[image_selected] = resize_pil_image(images[image_selected]["pil_image"], images[image_selected]["coords"], "left", x_diff, y_diff)
+                    images[image_selected] = resize_pil_image(images[image_selected]["pil_image"], images[image_selected]["coords"], "left", x_diff, y_diff, static_id=images[image_selected]["static_id"])
                     initial_mouse_pos = [event.x, event.y]
                 elif pointer_status == "resize-right":
-                    images[image_selected] = resize_pil_image(images[image_selected]["pil_image"], images[image_selected]["coords"], "right", x_diff, y_diff)
+                    images[image_selected] = resize_pil_image(images[image_selected]["pil_image"], images[image_selected]["coords"], "right", x_diff, y_diff, static_id=images[image_selected]["static_id"])
                     initial_mouse_pos = [event.x, event.y]
 
             canvas.coords(image_select_outline, images[image_selected]["coords"])
@@ -593,8 +599,8 @@ def handle_left_click(event):
                 selectTool = None
             s = canvas.create_rectangle(bodky[0][0], bodky[0][1], event.x, event.y, width=1, outline="black", dash=(4, 1))
         elif tool == "bucket":
+            old_bg_color = bg_color
             canvas.configure(bg=current_color)
-            bg_color = current_color
             return
         shapes.append(s)
 
@@ -657,6 +663,7 @@ def handle_left_drag(event):
 
 def handle_left_up(event):
     global bodky, shapes, selectTool, draw_history, initial_mouse_pos, image_selected, total_image_move, image_select_outline
+    global old_bg_color, bg_color
     if tool == "select":
         selectTool = shapes[0]
         # canvas.delete(shapes[0])
@@ -664,6 +671,11 @@ def handle_left_up(event):
         # if len(bodky) >= 2:
         #     canvas.create_line(bodky[0], bodky[1], width=widthSlider.get(), fill=current_color)
         #     bodky.pop(0)
+    if old_bg_color is not None:
+        bg_color = current_color
+        history.append({"type": "bucket", "color": old_bg_color})
+        old_bg_color = None
+    
     if image_select_outline is not None:
         canvas.delete(image_select_outline)
         image_select_outline = None
@@ -672,9 +684,12 @@ def handle_left_up(event):
     if draw_history != []:
         history.append(draw_history)
     if total_image_move != [0, 0]:
-        history.append({"type": "image_move", "image": image_selected, "move": total_image_move})
-    if start_image_coords != images[image_selected]["coords"]:
-        history.append({"type": "image_resize", "image": image_selected, "coords": start_image_coords})
+        history.append({"type": "image_move", "image": image_selected, "move": total_image_move, "static_id": images[image_selected]["static_id"]})
+    if image_selected is not None:
+        start_image_dimensions = [start_image_coords[2] - start_image_coords[0], start_image_coords[3] - start_image_coords[1]]
+        final_image_dimensions = [images[image_selected]["coords"][2] - images[image_selected]["coords"][0], images[image_selected]["coords"][3] - images[image_selected]["coords"][1]]
+        if start_image_dimensions != final_image_dimensions:
+            history.append({"type": "image_resize", "image": image_selected, "coords": start_image_coords, "static_id": images[image_selected]["static_id"]})
     total_image_move = [0, 0]
     initial_mouse_pos = []
     image_selected = None
@@ -683,7 +698,7 @@ def handle_left_up(event):
     draw_history = []
 
 def undo():
-    global history
+    global history, bg_color
     if len(history) == 0:
         return
     if type(history[-1]) == list:
@@ -691,18 +706,27 @@ def undo():
             canvas.delete(line)
     elif type(history[-1]) == dict:
         if history[-1].get("type") == "image_move":
+            for image in range(len(images)):
+                if images[image]["static_id"] == history[-1]["static_id"]:
+                    image_selected_id = image
             x_diff = history[-1]["move"][0]
             y_diff = history[-1]["move"][1]
-            canvas.move(images[history[-1]["image"]]["image"], -x_diff, -y_diff)
-            coords = images[history[-1]["image"]]["coords"]
-            images[history[-1]["image"]]["coords"] = [coords[0]-x_diff, coords[1]-y_diff, coords[2]-x_diff, coords[3]-y_diff]
+            canvas.move(images[image_selected_id]["image"], -x_diff, -y_diff)
+            coords = images[image_selected_id]["coords"]
+            images[image_selected_id]["coords"] = [coords[0]-x_diff, coords[1]-y_diff, coords[2]-x_diff, coords[3]-y_diff]
         elif history[-1].get("type") == "image_resize":
+            for image in range(len(images)):
+                if images[image]["static_id"] == history[-1]["static_id"]:
+                    image_selected_id = image
             coords = history[-1]["coords"]
-            images[history[-1]["image"]] = resize_pil_image(images[history[-1]["image"]]["pil_image"], images[history[-1]["image"]]["coords"], "static", 0, 0)
+            # print("cut dimensions: ", [coords[2] - coords[0], coords[3] - coords[1]])
+            # print("before dim: ", [images[history[-1]["image"]]["coords"][2] - images[history[-1]["image"]]["coords"][0], images[history[-1]["image"]]["coords"][3] - images[history[-1]["image"]]["coords"][1]])
+            canvas.delete(images[image_selected_id]["image"])
+            images[image_selected_id] = resize_pil_image(images[image_selected_id]["pil_image"], coords, "static", 0, 0, images[image_selected_id]["static_id"])
+        elif history[-1].get("type") == "bucket":
+            bg_color = history[-1]["color"]
+            canvas.config(bg=bg_color)
 
-
-            canvas.coords(images[history[-1]["image"]]["image"], coords)
-            images[history[-1]["image"]]["coords"] = coords
     else:
         canvas.delete(history[-1])
 
