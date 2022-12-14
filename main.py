@@ -51,6 +51,25 @@ def add_button(x, y, rgb):
     return tkinter.Button(navbar, bg=rgb_color(rgb), activebackground=rgb_color(rgb), image=pixel, width=15, height=15, cursor="target",
     command=lambda: handle_color_button_click(rgb_color(rgb))).place(x=x, y=y)
 
+def delete_canvas():
+    global images
+    confirmation.destroy()
+    # images_garbage_collection = []
+    images = []
+    canvas.delete("all")
+
+
+def delete_confirmation():
+    global confirmation
+    confirmation = tkinter.Tk()
+    confirmation.geometry(f"360x80")
+    confirmation.wm_title("Skicár - Delete canvas")
+    confirmation.iconbitmap("assets/icon.ico")
+    tkinter.Label(confirmation, text="Are you sure you want to delete the canvas?").place(x=60, y=0)
+    tkinter.Button(confirmation, text="Yes", command=delete_canvas, width=5).place(x=130, y=40)
+    tkinter.Button(confirmation, text="No", command=confirmation.destroy, width=5).place(x=180, y=40)
+    confirmation.mainloop()
+
 
 
 for index, color in enumerate(COLORS):
@@ -85,11 +104,16 @@ eraserImage = load_image(ERASER_PATH)
 
 tool = "pencil"
 selectTool = None
+pointer_status = None
 def change_tool(new_tool):
-    global tool, selectTool
+    global tool, selectTool, temp_pointer
+    if temp_pointer != None and (new_tool != "pencil" or new_tool != "eraser"):
+        canvas.delete(temp_pointer)
+        temp_pointer = None
     if new_tool == "pencil" or new_tool == "eraser":
         canvas.config(cursor="none")
     elif new_tool == "pointer":
+        pointer_status = "move"
         canvas.config(cursor="arrow")
     else:
         canvas.config(cursor="crosshair")
@@ -108,7 +132,7 @@ rectangleButton = tkinter.Button(navbar, image=rectImage, width=15, height=15, c
 rectangleFilledButton = tkinter.Button(navbar, image=rectImageFilled, width=15, height=15, cursor="target", command=lambda: change_tool("rectangle_filled"))
 circleButton = tkinter.Button(navbar, image=circleImage, width=15, height=15, cursor="target", command=lambda: change_tool("circle"))
 circleFilledButton = tkinter.Button(navbar, image=circleImageFilled, width=15, height=15, cursor="target", command=lambda: change_tool("circle_filled"))
-clearButton = tkinter.Button(navbar, image=clearImage, width=15, height=15, cursor="target", command=lambda: canvas.delete("all"))
+clearButton = tkinter.Button(navbar, image=clearImage, width=15, height=15, cursor="target", command=delete_confirmation)
 
 
 pointerButton.place(x=440, y=5)
@@ -148,13 +172,6 @@ def destroy(window, e1, e2):
     set_size(x, y)
     window.destroy()
 
-def delete_canvas():
-    global images
-    # images_garbage_collection = []
-    images = []
-    canvas.delete("all")
-
-
 def popupmsg():
     global popup
     popup = tkinter.Tk()
@@ -171,6 +188,8 @@ def popupmsg():
     e2.place(x=110, y=20)
     tkinter.Button(popup, text="Okay", command=lambda: destroy(popup, e1.get(), e2.get())).place(x=140, y=40)
     popup.mainloop()
+
+
 
 def open_link(url):
     webbrowser.open_new_tab(url)
@@ -251,23 +270,72 @@ def paste_image():
         os.remove("clipboard.png")
 
 def resize_pil_image(pil_image, coords, corner, x_diff, y_diff):
+    # try:
     if corner == "top_left":
-        print(coords)
-        print(x_diff, y_diff)
         width = coords[2] - coords[0] - x_diff
         height = coords[3] - coords[1] - y_diff
-        print(width, height)
-        # width = 200
-        # height = 200
         pos_x = coords[0] + x_diff
         pos_y = coords[1] + y_diff
-        # pil_image_reiszed = pil_image.resize((coords[2] - x_diff, coords[3] - y_diff), Image.Resampling.LANCZOS)
+        if width < 1:
+            width = 1
+            pos_x = coords[0]
+        if height < 1:
+            height = 1
+            pos_y = coords[1]
+
         pil_image_reiszed = pil_image.resize((width, height), Image.Resampling.LANCZOS)
         photo_image = ImageTk.PhotoImage(pil_image_reiszed)
         image = canvas.create_image(pos_x, pos_y, anchor="nw", image=photo_image)
-        print("old: ", coords)
-        print("new: ", [pos_x, pos_y, pos_x + width, pos_y + height])
-        return {"image": image, "coords": [pos_x, pos_y, pos_x + width, pos_y + height], "pil_image": pil_image_reiszed, "photo_image": photo_image}
+        return {"image": image, "coords": [pos_x, pos_y, pos_x + width, pos_y + height], "pil_image": pil_image, "photo_image": photo_image}
+    elif corner == "top_right":
+        width = coords[2] - coords[0] + x_diff
+        height = coords[3] - coords[1] - y_diff
+        pos_x = coords[0]
+        pos_y = coords[1] + y_diff
+        if width < 1:
+            width = 1
+        if height < 1:
+            height = 1
+            pos_y = coords[1]
+
+        pil_image_reiszed = pil_image.resize((width, height), Image.Resampling.LANCZOS)
+        photo_image = ImageTk.PhotoImage(pil_image_reiszed)
+        image = canvas.create_image(pos_x, pos_y, anchor="nw", image=photo_image)
+        return {"image": image, "coords": [pos_x, pos_y, pos_x + width, pos_y + height], "pil_image": pil_image, "photo_image": photo_image}
+    elif corner == "bottom_left":
+        width = coords[2] - coords[0] - x_diff
+        height = coords[3] - coords[1] + y_diff
+        pos_x = coords[0] + x_diff
+        pos_y = coords[1]
+        if width < 1:
+            width = 1
+            pos_x = coords[0]
+        if height < 1:
+            height = 1
+
+        pil_image_reiszed = pil_image.resize((width, height), Image.Resampling.LANCZOS)
+        photo_image = ImageTk.PhotoImage(pil_image_reiszed)
+        image = canvas.create_image(pos_x, pos_y, anchor="nw", image=photo_image)
+        return {"image": image, "coords": [pos_x, pos_y, pos_x + width, pos_y + height], "pil_image": pil_image, "photo_image": photo_image}
+    elif corner == "bottom_right":
+        width = coords[2] - coords[0] + x_diff
+        height = coords[3] - coords[1] + y_diff
+        pos_x = coords[0]
+        pos_y = coords[1]
+        if width < 1:
+            width = 1
+        if height < 1:
+            height = 1
+
+        pil_image_reiszed = pil_image.resize((width, height), Image.Resampling.LANCZOS)
+        photo_image = ImageTk.PhotoImage(pil_image_reiszed)
+        image = canvas.create_image(pos_x, pos_y, anchor="nw", image=photo_image)
+        return {"image": image, "coords": [pos_x, pos_y, pos_x + width, pos_y + height], "pil_image": pil_image, "photo_image": photo_image}
+    # except ValueError:
+    #     print("Test")
+    #     photo_image = ImageTk.PhotoImage(pil_image)
+    #     image = canvas.create_image(coords[0], coords[1], anchor="nw", image=photo_image)
+    #     return {"image": image, "coords": coords, "pil_image": pil_image, "photo_image": photo_image}
 
 control = False
 shift = False
@@ -346,7 +414,6 @@ draw_history = []
 initial_mouse_pos = []
 image_selected = None
 temp_pointer = None
-pointer_status = None
 total_image_move = [0, 0]
 def handle_left_click(event):
     global bodky, shapes, selectTool, draw_history, initial_mouse_pos, image_selected, temp_pointer, total_image_move
@@ -400,8 +467,18 @@ def handle_left_click(event):
                 images[image_selected]["coords"] = [coords[0]+x_diff, coords[1]+y_diff, coords[2]+x_diff, coords[3]+y_diff]
                 initial_mouse_pos = [event.x, event.y]
             elif pointer_status.startswith("resize"):
+                canvas.delete(images[image_selected]["image"])
                 if pointer_status == "resize-top-left":
                     images[image_selected] = resize_pil_image(images[image_selected]["pil_image"], images[image_selected]["coords"], "top_left", x_diff, y_diff)
+                    initial_mouse_pos = [event.x, event.y]
+                elif pointer_status == "resize-top-right":
+                    images[image_selected] = resize_pil_image(images[image_selected]["pil_image"], images[image_selected]["coords"], "top_right", x_diff, y_diff)
+                    initial_mouse_pos = [event.x, event.y]
+                elif pointer_status == "resize-bottom-left":
+                    images[image_selected] = resize_pil_image(images[image_selected]["pil_image"], images[image_selected]["coords"], "bottom_left", x_diff, y_diff)
+                    initial_mouse_pos = [event.x, event.y]
+                elif pointer_status == "resize-bottom-right":
+                    images[image_selected] = resize_pil_image(images[image_selected]["pil_image"], images[image_selected]["coords"], "bottom_right", x_diff, y_diff)
                     initial_mouse_pos = [event.x, event.y]
     else:
         if len(bodky) < 1:
@@ -435,7 +512,7 @@ def handle_left_drag(event):
             canvas.config(cursor="arrow")
         for image in range(len(images)):
             coords = images[image]["coords"]
-            corner_tolerance = 10
+            corner_tolerance = 20
 
             #cursor change
             #moving cursor
@@ -522,7 +599,7 @@ edit_menu.add_command(label="Undo", command=undo, accelerator="Ctrl+Z")
 edit_menu.add_separator()
 edit_menu.add_command(label="Copy", accelerator="Ctrl+C")
 edit_menu.add_command(label="Paste", accelerator="Ctrl+V")
-edit_menu.add_command(label="Delete", command=delete_canvas, accelerator="Del")
+edit_menu.add_command(label="Delete", command=delete_confirmation, accelerator="Del")
 
 help_menu = Menu(menubar, tearoff=0)
 help_menu.add_command(label="About", command=about_window)
