@@ -636,7 +636,7 @@ def handle_left_click(event):
 
 def handle_left_drag(event):
     global temp_pointer, pointer_status
-    if tool == "pencil" or tool == "eraser":
+    if tool == "pencil" or tool == "eraser" or tool == "rgb":
         if temp_pointer is not None:
             canvas.delete(temp_pointer)
         temp_pointer = canvas.create_oval(event.x-widthSlider.get()/2, event.y-widthSlider.get()/2, event.x+widthSlider.get()/2, event.y+widthSlider.get()/2, outline="black")
