@@ -1,4 +1,4 @@
-VERSION = "0.55"
+VERSION = "0.56"
 
 COLORS = {
     "red": (255, 0, 0),
@@ -20,9 +20,10 @@ COLORS = {
     'lightgray': (160, 160, 160),
     "gray": (105, 105, 105),
     "darkgray": (85, 85, 85),
-    'white': (255, 255, 255),
+    'white': (255, 255, 255)
 }
 
+COLORS["red"] 
 
 BRUSH_PATH = "./assets/brush.png"
 RECTANGLE_PATH = "./assets/stvorec.png"
@@ -35,3 +36,4 @@ POINTER_PATH = "./assets/pointer.png"
 ERASER_PATH = "./assets/eraser.png"
 LINE_PATH = "./assets/line.png"
 BUCKET_PATH = "./assets/bucket.png"
+RGB_PATH = "./assets/rgb.png"

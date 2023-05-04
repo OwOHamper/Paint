@@ -63,7 +63,29 @@ def delete_canvas():
     canvas.configure(bg=current_color)
     bg_color = current_color
 
-
+def get_rgb_fade(i):
+    # i = abs(i)
+    while i > 765:
+        i -= 765
+    if i <= 255:
+        default = [0, 0, 255]
+        default[0] += i
+        default[2] -= i
+    elif i <= 510:
+        i -= 255
+        default = [255, 0, 0]
+        default[0] -= i
+        default[1] += i
+    else:
+        i -= 510
+        default = [0, 255, 0]
+        default[1] -= i
+        default[2] += i
+    if default[0] > 255 or default[1] > 255 or default[2] > 255:
+        return rgb_color((int(255), int(255), int(255)))
+    else:
+        return rgb_color((int(default[0]), int(default[1]), int(default[2])))
+    
 def delete_confirmation():
     global confirmation
     confirmation = tkinter.Tk()
@@ -108,16 +130,17 @@ pointerImage = load_image(POINTER_PATH)
 eraserImage = load_image(ERASER_PATH)
 lineImage = load_image(LINE_PATH)
 bucketImage = load_image(BUCKET_PATH)
+rgbImage = load_image(RGB_PATH)
 
 tool = "pencil"
 selectTool = None
 pointer_status = None
 def change_tool(new_tool):
     global tool, selectTool, temp_pointer, pointer_status
-    if temp_pointer != None and (new_tool != "pencil" or new_tool != "eraser"):
+    if temp_pointer != None and (new_tool != "pencil" or new_tool != "eraser" or new_tool != "rgb"):
         canvas.delete(temp_pointer)
         temp_pointer = None
-    if new_tool == "pencil" or new_tool == "eraser":
+    if new_tool == "pencil" or new_tool == "eraser" or new_tool == "rgb":
         canvas.config(cursor="none")
     elif new_tool == "pointer":
         pointer_status = "move"
@@ -143,11 +166,12 @@ rectangleButton = tkinter.Button(navbar, image=rectImage, width=15, height=15, c
 rectangleFilledButton = tkinter.Button(navbar, image=rectImageFilled, width=15, height=15, cursor="target", command=lambda: change_tool("rectangle_filled"))
 circleButton = tkinter.Button(navbar, image=circleImage, width=15, height=15, cursor="target", command=lambda: change_tool("circle"))
 circleFilledButton = tkinter.Button(navbar, image=circleImageFilled, width=15, height=15, cursor="target", command=lambda: change_tool("circle_filled"))
+rgbButton = tkinter.Button(navbar, image=rgbImage, width=15, height=15, cursor="target", command=lambda: change_tool("rgb"))
 clearButton = tkinter.Button(navbar, image=clearImage, width=15, height=15, cursor="target", command=delete_confirmation)
 
 width = 30
 
-toolList = [pointerButton, selectButton, pencilButton, eraserButton, bucketButton, lineButton, rectangleButton, rectangleFilledButton, circleButton, circleFilledButton, clearButton]
+toolList = [pointerButton, selectButton, pencilButton, eraserButton, bucketButton, lineButton, rectangleButton, rectangleFilledButton, circleButton, circleFilledButton, rgbButton, clearButton]
 positions_x = range(440, 440+width*len(toolList), width)
 for tool_ in toolList:
     tool_.place(x=positions_x[toolList.index(tool_)], y=5, width=30, height=30)
@@ -421,8 +445,6 @@ def handle_key_event(event):
         change_tool("select")
     elif key == "b":
         change_tool("pencil")
-    elif key == "b":
-        change_tool("pencil")
     elif key == "e":
         change_tool("eraser")
     elif key == "l":
@@ -486,16 +508,21 @@ image_select_outline = None
 total_image_move = [0, 0]
 start_image_coords = [0, 0]
 old_bg_color = None
+rgb_color_index = 0
 def handle_left_click(event):
     global bodky, shapes, selectTool, draw_history, initial_mouse_pos, image_selected, temp_pointer, total_image_move, bg_color
     global image_select_outline, start_image_coords, old_bg_color
+    global rgb_color_index
 
-    if tool == "pencil" or tool == "eraser":
+    if tool == "pencil" or tool == "eraser" or tool == "rgb":
         if widthSlider.get() < 3:
             bodky.append([event.x, event.y])
             if len(bodky) >= 2:
                 if tool == "pencil":
                     line = canvas.create_line(bodky[0], bodky[1], width=widthSlider.get(), fill=current_color)
+                elif tool == "rgb":
+                    line = canvas.create_line(bodky[0], bodky[1], width=widthSlider.get(), fill=get_rgb_fade(rgb_color_index))
+                    rgb_color_index += 1
                 else:
                     line = canvas.create_line(bodky[0], bodky[1], width=widthSlider.get(), fill=bg_color)
                 draw_history.append(line)
@@ -503,6 +530,9 @@ def handle_left_click(event):
         else:
             if tool == "pencil":
                 oval = canvas.create_oval(event.x-widthSlider.get()/2, event.y-widthSlider.get()/2, event.x+widthSlider.get()/2, event.y+widthSlider.get()/2, fill=current_color, outline=current_color)
+            elif tool == "rgb":
+                oval = canvas.create_oval(event.x-widthSlider.get()/2, event.y-widthSlider.get()/2, event.x+widthSlider.get()/2, event.y+widthSlider.get()/2, fill=get_rgb_fade(rgb_color_index), outline=get_rgb_fade(rgb_color_index))
+                rgb_color_index += 1
             else:
                 oval = canvas.create_oval(event.x-widthSlider.get()/2, event.y-widthSlider.get()/2, event.x+widthSlider.get()/2, event.y+widthSlider.get()/2, fill=bg_color, outline=bg_color)
             draw_history.append(oval)
