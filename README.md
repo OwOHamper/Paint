@@ -14,7 +14,7 @@ python main.py
 
 
 ## Features
-### Easily configurable colo picker:
+### Easily configurable color picker:
 ![image](https://user-images.githubusercontent.com/74879467/207471143-63c48c44-39b2-43cd-a033-5de9a351bfff.png)
 
 ### Slider for width of every tool:
