@@ -60,7 +60,7 @@ def delete_canvas():
     canvas.delete("all")
     current_color = "black"
     bg_color = "white"
-    canvas.configure(bg=current_color)
+    canvas.configure(bg=bg_color)
     bg_color = current_color
 
 def get_rgb_fade(i):
